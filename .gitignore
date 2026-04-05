@@ -46,3 +46,9 @@
 
 # debug information files
 *.dwo
+
+# claude
+*.claude
+
+# local stuff for ease of access
+ASSIGNMENT.md
