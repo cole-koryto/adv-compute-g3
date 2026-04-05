@@ -1,20 +1,32 @@
+#include "phase1.hpp"
 #include <iostream>
 #include <random>
-constexpr int SCALE = 100;
 
-void multiply_mv_row_major(const double* matrix, int rows, int cols, const double* vector, double* result)
+void print_matrix(const double *matrix, int rows, int cols)
 {
     for (int i = 0; i < rows; ++i)
     {
-        result[i] = 0;
         for (int j = 0; j < cols; ++j)
         {
-            result[i] += matrix[i * cols + j] * vector[j];
+            std::cout << matrix[i * cols + j] << " ";
         }
+        std::cout << std::endl;
     }
 }
 
-void generate_random_matrix(int rows, int cols, double*& matrix)
+void print_matrix_col_major(const double *matrix, int rows, int cols)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            std::cout << matrix[i + j * rows] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void generate_random_matrix(int rows, int cols, double *&matrix, int scale)
 {
     // set up random environment
     std::random_device rd;
@@ -28,12 +40,12 @@ void generate_random_matrix(int rows, int cols, double*& matrix)
     {
         for (int j = 0; j < cols; ++j)
         {
-            matrix[i * cols + j] = dist(gen) * SCALE;
+            matrix[i * cols + j] = dist(gen) * scale;
         }
     }
 }
 
-void generate_random_vector(int size, double*& vector)
+void generate_random_vector(int size, double *&vector, int scale)
 {
     // set up random environment
     std::random_device rd;
@@ -45,62 +57,79 @@ void generate_random_vector(int size, double*& vector)
 
     for (int i = 0; i < size; ++i)
     {
-        vector[i] = dist(gen) * SCALE;
+        vector[i] = dist(gen) * scale;
     }
 }
 
-int main()
+// assumes row-major order
+void multiply_mv_row_major(const double *matrix, int rows, int cols, const double *vector, double *result)
 {
-    const int ROWS = 2;
-    const int COLS = 2;
-
-    // Generate a random matrix
-    double* matrix;
-    generate_random_matrix(ROWS, COLS, matrix);
-    std::cout<< "Matrix" << std::endl;
-    for (int i = 0; i < ROWS; ++i)
+    for (int i = 0; i < rows; ++i)
     {
-        for (int j = 0; j < COLS; ++j)
+        result[i] = 0;
+        for (int j = 0; j < cols; ++j)
         {
-            std::cout<< matrix[i * COLS + j] << std::endl;
+            result[i] += matrix[i * cols + j] * vector[j];
         }
     }
+}
 
-    // Generate a random vector
-    double* vector;
-    generate_random_vector(COLS, vector);
-    std::cout<< "Vector" << std::endl;
-    for (int i = 0; i < ROWS; ++i)
+// assumes matrix is stored in column-major order
+void multiply_mv_col_major(const double *matrix, int rows, int cols, const double *vector, double *result)
+{
+    // stored [col1 ... coln]
+    for (int i = 0; i < rows; i++)
     {
-        std::cout<< vector[i] << std::endl;
+        result[i] = 0;
+        for (int j = 0; j < cols; j++)
+        {
+            result[i] += matrix[i + j * rows] * vector[j];
+        }
+    }
+}
+
+void multiply_mm_naive(const double *matrixA, int rowsA, int colsA, const double *matrixB, int rowsB, int colsB, double *result)
+{
+    if (colsA != rowsB)
+    {
+        std::cerr << "Error: dimensions must be (m, n) x (n, k)" << std::endl;
+        return;
     }
 
-    // Evaluate performance (according to Benchmarking in assignment)
-    // Run Matrix-Vector Multiplication (Row-Major)
-    double* result = new double[ROWS];
-    multiply_mv_row_major(matrix, ROWS, COLS, vector, result);
-    std::cout<< "Matrix-Vector Multiplication Results: " << std::endl;
-    for (int i = 0; i < ROWS; ++i)
+    for (int i = 0; i < rowsA; i++)
     {
-        std::cout<< result[i] << std::endl;
+        for (int j = 0; j < colsB; j++)
+        {
+            result[i * colsB + j] = 0; // initialize result element
+            // result will be rowsA x colsB in shape (length)
+            // M[i][j] = result[i * colsB + j] = matrixA[i] * matrixB[j]
+            for (int k = 0; k < colsA; k++)
+            {
+                result[i * colsB + j] += matrixA[i * colsA + k] * matrixB[j + k * colsB];
+            }
+        }
+    }
+}
+
+void multiply_mm_transposed_b(const double *matrixA, int rowsA, int colsA, const double *matrixB_transposed, int rowsB, int colsB, double *result)
+{
+    if (colsA != colsB)
+    {
+        std::cerr << "Error: dimensions must be (m, n) x (k, n) for transposed B" << std::endl;
+        return;
     }
 
-    // Run Matrix-Vector Multiplication (Column-Major)
-
-    // Run Matrix-Matrix Multiplication (Naive)
-
-    // Run Matrix-Matrix Multiplication (Transposed B)
-
-    // Test correctness
-    // Run Matrix-Vector Multiplication (Row-Major)
-
-    // Run Matrix-Vector Multiplication (Column-Major)
-
-    // Run Matrix-Matrix Multiplication (Naive)
-
-    // Run Matrix-Matrix Multiplication (Transposed B)
-
-    delete[] matrix;
-    delete[] vector;
-    delete[] result;
+    // this time we got rowA x rowB instead of rowA x colB
+    // result_ij = row_i of A dot row_j of B^T
+    for (int i = 0; i < rowsA; i++)
+    {
+        for (int j = 0; j < rowsB; j++)
+        {
+            result[i * rowsB + j] = 0; // initialize result element
+            for (int k = 0; k < colsA; k++)
+            {
+                result[i * rowsB + j] += matrixA[i * colsA + k] * matrixB_transposed[j * colsB + k];
+            }
+        }
+    }
 }
