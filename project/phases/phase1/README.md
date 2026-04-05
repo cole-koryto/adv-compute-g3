@@ -5,16 +5,19 @@
 ```bash
 cd project/phases/phase1
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_CXX_FLAGS="-O3 -g"
 make
 ```
+
+The `-O3` flag enables compiler optimizations and `-g` adds debug symbols for profiling with Instruments.
 
 Run modes:
 
 ```bash
-./main          # correctness tests (default)
-./main bench    # benchmarking
-./main profile  # profiling
+./main              # correctness tests (default)
+./main bench        # benchmarking (baseline timing)
+./main bench-align  # memory alignment benchmark
+./main profile      # profiling (runs mm_naive and mm_transposed_b 10x on 1024x1024)
 ```
 
 ## Benchmarking and Profiling
