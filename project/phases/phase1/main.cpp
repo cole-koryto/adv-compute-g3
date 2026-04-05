@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cmath>
+#include <string>
+#include <vector>
+#include <chrono>
 #include "phase1.hpp"
 
 bool check(const double *result, const double *expected, int size, const char *name)
@@ -17,8 +20,96 @@ bool check(const double *result, const double *expected, int size, const char *n
     return true;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    std::string mode = "test";
+    if (argc > 1)
+        mode = argv[1];
+
+    if (mode == "bench")
+    {
+        const int RUNS = 20;
+        const int SCALE = 10;
+        int sizes[] = {64, 128, 256, 512, 1024};
+
+        std::cout << "size,function,avg_ms,stddev_ms" << std::endl;
+
+        for (int N : sizes)
+        {
+            // allocate matrices and vectors
+            double *A_row, *A_col, *B, *B_T, *v, *mv_result, *mm_result;
+            generate_random_matrix(N, N, A_row, SCALE);
+            generate_random_matrix(N, N, A_col, SCALE);  // same random data is fine for col-major
+            generate_random_matrix(N, N, B, SCALE);
+            generate_random_matrix(N, N, B_T, SCALE);    // treat as pre-transposed B
+            generate_random_vector(N, v, SCALE);
+            mv_result = new double[N];
+            mm_result = new double[N * N];
+
+            // benchmark each function
+            struct Bench
+            {
+                const char *name;
+                std::vector<double> times;
+            };
+            Bench benches[] = {
+                {"mv_row_major", {}},
+                {"mv_col_major", {}},
+                {"mm_naive", {}},
+                {"mm_transposed_b", {}},
+            };
+
+            for (int r = 0; r < RUNS; r++)
+            {
+                auto t0 = std::chrono::high_resolution_clock::now();
+                multiply_mv_row_major(A_row, N, N, v, mv_result);
+                auto t1 = std::chrono::high_resolution_clock::now();
+                multiply_mv_col_major(A_col, N, N, v, mv_result);
+                auto t2 = std::chrono::high_resolution_clock::now();
+                multiply_mm_naive(A_row, N, N, B, N, N, mm_result);
+                auto t3 = std::chrono::high_resolution_clock::now();
+                multiply_mm_transposed_b(A_row, N, N, B_T, N, N, mm_result);
+                auto t4 = std::chrono::high_resolution_clock::now();
+
+                benches[0].times.push_back(std::chrono::duration<double, std::milli>(t1 - t0).count());
+                benches[1].times.push_back(std::chrono::duration<double, std::milli>(t2 - t1).count());
+                benches[2].times.push_back(std::chrono::duration<double, std::milli>(t3 - t2).count());
+                benches[3].times.push_back(std::chrono::duration<double, std::milli>(t4 - t3).count());
+            }
+
+            for (auto &b : benches)
+            {
+                double sum = 0;
+                for (double t : b.times)
+                    sum += t;
+                double mean = sum / b.times.size();
+
+                double sq_sum = 0;
+                for (double t : b.times)
+                    sq_sum += (t - mean) * (t - mean);
+                double stddev = std::sqrt(sq_sum / b.times.size());
+
+                std::cout << N << "," << b.name << "," << mean << "," << stddev << std::endl;
+            }
+
+            delete[] A_row;
+            delete[] A_col;
+            delete[] B;
+            delete[] B_T;
+            delete[] v;
+            delete[] mv_result;
+            delete[] mm_result;
+        }
+        return 0;
+    }
+
+    if (mode == "profile")
+    {
+        std::cout << "TODO: profiling" << std::endl;
+        return 0;
+    }
+
+    // default: test mode
     int passed = 0;
     int total = 8;
 
