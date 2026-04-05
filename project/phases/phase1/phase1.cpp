@@ -34,7 +34,7 @@ void generate_random_matrix(int rows, int cols, double *&matrix, int scale)
     std::uniform_real_distribution<double> dist(0.0f, 1.0f);
 
     // allocate data (contiguous block)
-    matrix = new double[rows * cols]; // todo free data still
+    matrix = new double[rows * cols];
 
     for (int i = 0; i < rows; ++i)
     {
@@ -64,6 +64,16 @@ void generate_random_vector(int size, double *&vector, int scale)
 // assumes row-major order
 void multiply_mv_row_major(const double *matrix, int rows, int cols, const double *vector, double *result)
 {
+    if (!matrix || !vector || !result)
+    {
+        std::cerr << "Error: null pointer passed to multiply_mv_row_major" << std::endl;
+        return;
+    }
+    if (rows <= 0 || cols <= 0)
+    {
+        std::cerr << "Error: invalid dimensions in multiply_mv_row_major" << std::endl;
+        return;
+    }
     for (int i = 0; i < rows; ++i)
     {
         result[i] = 0;
@@ -77,6 +87,16 @@ void multiply_mv_row_major(const double *matrix, int rows, int cols, const doubl
 // assumes matrix is stored in column-major order
 void multiply_mv_col_major(const double *matrix, int rows, int cols, const double *vector, double *result)
 {
+    if (!matrix || !vector || !result)
+    {
+        std::cerr << "Error: null pointer passed to multiply_mv_col_major" << std::endl;
+        return;
+    }
+    if (rows <= 0 || cols <= 0)
+    {
+        std::cerr << "Error: invalid dimensions in multiply_mv_col_major" << std::endl;
+        return;
+    }
     // stored [col1 ... coln]
     for (int i = 0; i < rows; i++)
     {
@@ -90,6 +110,11 @@ void multiply_mv_col_major(const double *matrix, int rows, int cols, const doubl
 
 void multiply_mm_naive(const double *matrixA, int rowsA, int colsA, const double *matrixB, int rowsB, int colsB, double *result)
 {
+    if (!matrixA || !matrixB || !result)
+    {
+        std::cerr << "Error: null pointer passed to multiply_mm_naive" << std::endl;
+        return;
+    }
     if (colsA != rowsB)
     {
         std::cerr << "Error: dimensions must be (m, n) x (n, k)" << std::endl;
@@ -113,6 +138,11 @@ void multiply_mm_naive(const double *matrixA, int rowsA, int colsA, const double
 
 void multiply_mm_transposed_b(const double *matrixA, int rowsA, int colsA, const double *matrixB_transposed, int rowsB, int colsB, double *result)
 {
+    if (!matrixA || !matrixB_transposed || !result)
+    {
+        std::cerr << "Error: null pointer passed to multiply_mm_transposed_b" << std::endl;
+        return;
+    }
     if (colsA != colsB)
     {
         std::cerr << "Error: dimensions must be (m, n) x (k, n) for transposed B" << std::endl;
