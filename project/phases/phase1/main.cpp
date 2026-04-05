@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <cstdlib>
+#include <random>
 #include "phase1.hpp"
 
 bool check(const double *result, const double *expected, int size, const char *name)
@@ -99,6 +101,105 @@ int main(int argc, char *argv[])
             delete[] v;
             delete[] mv_result;
             delete[] mm_result;
+        }
+        return 0;
+    }
+
+    if (mode == "bench-align")
+    {
+        const int RUNS = 20;
+        const int SCALE = 10;
+        int sizes[] = {64, 128, 256, 512, 1024};
+
+        std::cout << "size,function,alloc,avg_ms,stddev_ms" << std::endl;
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+        for (int N : sizes)
+        {
+            size_t mat_bytes = sizeof(double) * N * N;
+            size_t vec_bytes = sizeof(double) * N;
+
+            // unaligned allocation (new + offset by 1 byte via char* trick to force misalignment)
+            double *uA = new double[N * N];
+            double *uB = new double[N * N];
+            double *uB_T = new double[N * N];
+            double *uv = new double[N];
+            double *umv_res = new double[N];
+            double *umm_res = new double[N * N];
+
+            // aligned allocation (64-byte boundary)
+            double *aA = (double *)aligned_alloc(64, mat_bytes);
+            double *aB = (double *)aligned_alloc(64, mat_bytes);
+            double *aB_T = (double *)aligned_alloc(64, mat_bytes);
+            double *av = (double *)aligned_alloc(64, vec_bytes);
+            double *amv_res = (double *)aligned_alloc(64, vec_bytes);
+            double *amm_res = (double *)aligned_alloc(64, mat_bytes);
+
+            // fill with same random data
+            for (int i = 0; i < N * N; i++)
+            {
+                double val = dist(gen) * SCALE;
+                uA[i] = val; aA[i] = val;
+                val = dist(gen) * SCALE;
+                uB[i] = val; aB[i] = val;
+                val = dist(gen) * SCALE;
+                uB_T[i] = val; aB_T[i] = val;
+            }
+            for (int i = 0; i < N; i++)
+            {
+                double val = dist(gen) * SCALE;
+                uv[i] = val; av[i] = val;
+            }
+
+            struct Bench
+            {
+                const char *name;
+                const char *alloc;
+                std::vector<double> times;
+            };
+            Bench benches[] = {
+                {"mm_naive", "unaligned", {}},
+                {"mm_naive", "aligned", {}},
+                {"mm_transposed_b", "unaligned", {}},
+                {"mm_transposed_b", "aligned", {}},
+            };
+
+            for (int r = 0; r < RUNS; r++)
+            {
+                auto t0 = std::chrono::high_resolution_clock::now();
+                multiply_mm_naive(uA, N, N, uB, N, N, umm_res);
+                auto t1 = std::chrono::high_resolution_clock::now();
+                multiply_mm_naive(aA, N, N, aB, N, N, amm_res);
+                auto t2 = std::chrono::high_resolution_clock::now();
+                multiply_mm_transposed_b(uA, N, N, uB_T, N, N, umm_res);
+                auto t3 = std::chrono::high_resolution_clock::now();
+                multiply_mm_transposed_b(aA, N, N, aB_T, N, N, amm_res);
+                auto t4 = std::chrono::high_resolution_clock::now();
+
+                benches[0].times.push_back(std::chrono::duration<double, std::milli>(t1 - t0).count());
+                benches[1].times.push_back(std::chrono::duration<double, std::milli>(t2 - t1).count());
+                benches[2].times.push_back(std::chrono::duration<double, std::milli>(t3 - t2).count());
+                benches[3].times.push_back(std::chrono::duration<double, std::milli>(t4 - t3).count());
+            }
+
+            for (auto &b : benches)
+            {
+                double sum = 0;
+                for (double t : b.times) sum += t;
+                double mean = sum / b.times.size();
+                double sq_sum = 0;
+                for (double t : b.times) sq_sum += (t - mean) * (t - mean);
+                double stddev = std::sqrt(sq_sum / b.times.size());
+                std::cout << N << "," << b.name << "," << b.alloc << "," << mean << "," << stddev << std::endl;
+            }
+
+            delete[] uA; delete[] uB; delete[] uB_T;
+            delete[] uv; delete[] umv_res; delete[] umm_res;
+            std::free(aA); std::free(aB); std::free(aB_T);
+            std::free(av); std::free(amv_res); std::free(amm_res);
         }
         return 0;
     }
