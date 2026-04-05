@@ -1,5 +1,22 @@
 # Phase 1 - High-Performance Linear Algebra Kernels TODO COMPLETE BEFORE SUBMISSION
 
+## Build and Run
+
+```bash
+cd project/phases/phase1
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
+
+Run modes:
+
+```bash
+./main          # correctness tests (default)
+./main bench    # benchmarking
+./main profile  # profiling
+```
+
 ## Benchmarking and Profiling
 
 Each function was benchmarked on square NxN matrices (N = 64, 128, 256, 512, 1024) over 20 runs per size. Timing used `std::chrono::high_resolution_clock` around the multiply call only (excluding allocation and data generation). Results report mean and standard deviation in milliseconds.
