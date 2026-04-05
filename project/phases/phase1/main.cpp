@@ -206,7 +206,30 @@ int main(int argc, char *argv[])
 
     if (mode == "profile")
     {
-        std::cout << "TODO: profiling" << std::endl;
+        const int N = 1024;
+        const int RUNS = 10;
+        const int SCALE = 10;
+
+        double *A, *B, *B_T, *result;
+        generate_random_matrix(N, N, A, SCALE);
+        generate_random_matrix(N, N, B, SCALE);
+        generate_random_matrix(N, N, B_T, SCALE);
+        result = new double[N * N];
+
+        std::cout << "Running mm_naive " << RUNS << "x (" << N << "x" << N << ")..." << std::endl;
+        for (int r = 0; r < RUNS; r++)
+            multiply_mm_naive(A, N, N, B, N, N, result);
+
+        std::cout << "Running mm_transposed_b " << RUNS << "x (" << N << "x" << N << ")..." << std::endl;
+        for (int r = 0; r < RUNS; r++)
+            multiply_mm_transposed_b(A, N, N, B_T, N, N, result);
+
+        std::cout << "Done." << std::endl;
+
+        delete[] A;
+        delete[] B;
+        delete[] B_T;
+        delete[] result;
         return 0;
     }
 
