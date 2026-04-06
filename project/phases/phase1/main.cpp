@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
                 {"mv_col_major", {}},
                 {"mm_naive", {}},
                 {"mm_transposed_b", {}},
+                {"mm_optimized", {}},
             };
 
             for (int r = 0; r < RUNS; r++)
@@ -72,11 +73,14 @@ int main(int argc, char *argv[])
                 auto t3 = std::chrono::high_resolution_clock::now();
                 multiply_mm_transposed_b(A_row, N, N, B_T, N, N, mm_result);
                 auto t4 = std::chrono::high_resolution_clock::now();
+                multiply_mm_optimized(A_row, N, N, B, N, N, mm_result);
+                auto t5 = std::chrono::high_resolution_clock::now();
 
                 benches[0].times.push_back(std::chrono::duration<double, std::milli>(t1 - t0).count());
                 benches[1].times.push_back(std::chrono::duration<double, std::milli>(t2 - t1).count());
                 benches[2].times.push_back(std::chrono::duration<double, std::milli>(t3 - t2).count());
                 benches[3].times.push_back(std::chrono::duration<double, std::milli>(t4 - t3).count());
+                benches[4].times.push_back(std::chrono::duration<double, std::milli>(t5 - t4).count());
             }
 
             for (auto &b : benches)

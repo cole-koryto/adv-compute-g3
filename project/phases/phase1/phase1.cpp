@@ -136,6 +136,52 @@ void multiply_mm_naive(const double *matrixA, int rowsA, int colsA, const double
     }
 }
 
+void multiply_mm_optimized(const double *matrixA, int rowsA, int colsA, const double *matrixB, int rowsB, int colsB, double *result) {
+    /*
+     * The main issue of our above naive multiplication function is that it fixes i and j, then 'sweeps' across k, inefficiently
+     * using our cache. Optimizing would require
+     *
+    */
+    if (!matrixA || !matrixB || !result) {
+        std::cerr << "Error: null pointer passed to multiply_mm_naive" << std::endl;
+        return;
+    }
+    if (colsA != rowsB) {
+        std::cerr << "Error: dimensions must be (m, n) x (n, k)" << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < rowsA * colsB; ++i)
+    {
+        result[i] = 0.0;
+    }
+
+    // Break up into blocks
+    const int BLOCK = 32;
+
+    for (int ii = 0; ii < rowsA; ii += BLOCK) {
+        int i_end = std::min(ii + BLOCK, rowsA);
+
+        for (int kk = 0; kk < colsA; kk += BLOCK) {
+            int k_end = std::min(kk + BLOCK, colsA);
+
+            for (int jj = 0; jj < colsB; jj += BLOCK) {
+                int j_end = std::min(jj + BLOCK, colsB);
+
+                for (int i = ii; i < i_end; ++i) {
+                    for (int k = kk; k < k_end; ++k) {
+                        double a_val = matrixA[i * colsA + k];
+
+                        for (int j = jj; j < j_end; ++j) {
+                            result[i * colsB + j] += a_val * matrixB[k * colsB + j];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void multiply_mm_transposed_b(const double *matrixA, int rowsA, int colsA, const double *matrixB_transposed, int rowsB, int colsB, double *result)
 {
     if (!matrixA || !matrixB_transposed || !result)
