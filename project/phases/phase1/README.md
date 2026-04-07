@@ -86,9 +86,9 @@ Each function was benchmarked on square NxN matrices (N = 64, 128, 256, 512, 102
 
 ## Discussion Questions
 ### Explain the key differences between pointers and references in C++. When would you choose to use a pointer over a reference, and vice versa, in the context of implementing numerical algorithms?
-- References are defined typically with type&, and aliases an existing variable. Once references are established/binded to a valid object/variable (which it must do), they can't be null or reseated.References are for simpler and safer tasks.
-- Pointers are defined typically with type*, and have a memory address. This memory address can be reassigned or set to a null pointer, but is useful for memory allocation tasks and arithmetic with pointers as well. For overal low-evel, high performance code, they're favored.
-- Overall, for numerical algorithms, references might be used for scalar parameters, while pointers could be done for simple indexing and manual memory allocation. Pointers are also used for representing contiguous blocks of memory well in a dynamic fashion
+- References are defined typically with type&, and aliases an existing variable. Once references are established/bound to a valid object/variable (which it must do), they can't be null or reassigned. References are for simpler and safer tasks.
+- Pointers are defined typically with type*, and have a memory address. This memory address can be reassigned or set to a null pointer, but is useful for memory allocation tasks and arithmetic with pointers as well. For overall low-level, high-performance code, they're favored.
+- Overall, for numerical algorithms, references might be used for scalar parameters, while pointers could be used for simple indexing and manual memory allocation. Pointers are also used for representing contiguous blocks of memory well in a dynamic fashion
 
 
 ### How does the row-major and column-major storage order of matrices affect memory access patterns and cache locality during matrix-vector and matrix-matrix multiplication? Provide specific examples from your implementations and benchmarking results.
@@ -97,20 +97,20 @@ Each function was benchmarked on square NxN matrices (N = 64, 128, 256, 512, 102
   - column-major: stores columns contiguously
 - If you do Matrix Vector Multiplication using:
   - Row-major: this is good spatial locality, clearly showing that it was faster than column-major in terms of runtime. There's not a lot of cache misses and memory is accessed sequentially.
-  - Coumn-major: a lot of cache misses here and stride access may be a cause of it. Larger strides are definitely the issue here based on our computation.
-- Matrix Matrix Multiplication is similar; the naive iplementation has poor cache locality, but when we have our transposed and optimized versions, performance is improved because contiguous memory access is defined well, whether through blocks or row-major usage.
+  - Column-major: a lot of cache misses here, and stride access may be a cause of it. Larger strides are definitely the issue here based on our computation.
+- Matrix Matrix Multiplication is similar; the naive implementation has poor cache locality, but when we have our transposed and optimized versions, performance is improved because contiguous memory access is defined well, whether through blocks or row-major usage.
 
 ### Describe how CPU caches work (L1, L2, L3) and explain the concepts of temporal and spatial locality. How did you try to exploit these concepts in your optimizations?
 
 - Modern CPUs use a hierarchy of caches (L1, L2, and L3) to reduce memory access latency. From one of the quizzes we took before this, L1 cache is the smallest and fastest, while L3 is larger but slower. 
 - Two key concepts that influence performance are spatial and temporal locality. 
   - Spatial locality refers to accessing memory locations that are close together, while temporal locality refers to reusing recently accessed data. 
-  - Blocking, for example, is an example of temporal locality, where in our optimization method we kept A/B blocks as well as the C block in cache. Blocking improves reuse while lowering time when we did optimize them.
+  - Blocking, for example, is an example of temporal locality, where in our optimization method, we kept A/B blocks as well as the C block in cache. Blocking improves reuse while lowering the time once optimized.
 - In our optimized implementation, we improved spatial locality by accessing matrix B and the result matrix in contiguous memory order within the innermost loop. 
   - We also improved temporal locality by reusing elements of matrix A (A[i,k]) multiple times before moving on. 
   - We did these changes to reduce cache misses and improve overall performance, which is reflected in the significant speedup of the optimized implementation compared to the naive version.
 
-###  is memory alignment, and why is it important for performance? Did you observe a significant performance difference between aligned and unaligned memory in your experiments? Explain your findings.
+### What is memory alignment, and why is it important for performance? Did you observe a significant performance difference between aligned and unaligned memory in your experiments? Explain your findings.
 - Memory alignment ensures that data is stored at memory addresses that are multiples of a specific boundary (e.g., 64 bytes), which matches the size of cache lines and SIMD instructions. Proper alignment can improve performance by enabling more efficient memory access and vectorized operations. 
 - However, in our code, we observed little to no performance improvement when using aligned memory compared to unaligned memory. 
   - This is likely because our implementation does not explicitly use SIMD instructions and is more limited by memory access patterns than alignment. 
@@ -132,6 +132,6 @@ Each function was benchmarked on square NxN matrices (N = 64, 128, 256, 512, 102
 ### Reflect on the teamwork aspect of this assignment. How did dividing the initial implementation tasks and then collaborating on analysis and optimization work? What were the challenges and benefits of this approach?
 - We divided the assignment among members, where each person was able to focus on a specific function/aspect to ensure correctness.
   - We think this approach made the process more efficient and helped build a strong understanding of each algorithm.
-- Afterwards, we tried to collaborate on performance analysis as well tot alk about our insights. 
-- Probably the most difficult aspect was that we had to remain consistency in our approaches and as tasks were passed on, it took a bit longer for the next individual to see what was being done
-  - But we think because this was an overall simpler assignment, these problems were minimized, but working concurrently could be something we try in the future.
+- Afterward, we tried to collaborate on performance analysis as well to talk about our insights. 
+- Probably the most difficult aspect was that we had to remain consistent in our approaches, and as tasks were passed on, it took a bit longer for the next individual to see what was being done
+  - But we think that because this was an overall simpler assignment, these problems were minimized, but working concurrently could be something we try in the future.
