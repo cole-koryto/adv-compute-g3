@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstring>
 #include <cstdlib>
+#include <deque>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -12,9 +13,11 @@ using namespace std;
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 12345
 #define BUFFER_SIZE 1024
+#define HISTORY_SIZE 3
 
 void receiveAndRespond(int socketFd, const string& name) {
     char buffer[BUFFER_SIZE];
+    std::deque<float> priceHistory;
 
     // Send client name
     send(socketFd, name.c_str(), name.size(), 0);
@@ -39,16 +42,46 @@ void receiveAndRespond(int socketFd, const string& name) {
 
         cout << "📥 Received price ID: " << priceId << ", Value: " << price << endl;
 
-        // Simulate reaction delay
-        this_thread::sleep_for(chrono::milliseconds(100 + rand() % 300));
+        // Adds price to deque up to size of HISTORY_SIZE
+        priceHistory.push_back(price);
+        if (priceHistory.size() > HISTORY_SIZE)
+            priceHistory.pop_front();
 
-        // Send order (price ID)
-        string order = to_string(priceId);
-        send(socketFd, order.c_str(), order.length(), 0);
+        // Detect momentum on complete price history
+        if (priceHistory.size() == HISTORY_SIZE)
+        {
+            float a = priceHistory[0];
+            float b = priceHistory[1];
+            float c = priceHistory[2];
 
-        cout << "📤 Sent order for price ID: " << priceId << endl;
+            bool up = (a < b) && (b < c);
+            bool down = (a > b) && (b > c);
+
+            // Makes trades based on momentum
+            if (up || down)
+            {
+                if (up)
+                    cout << "Momentum up! Sending order for price ID " << priceId << endl;
+                else if (down)
+                    cout << "Momentum down! Sending order for price ID " << priceId << endl;
+
+                // Makes trades
+                string order = to_string(priceId);
+                this_thread::sleep_for(chrono::milliseconds(10 + rand() % 50)); // Simulated trade delay
+                send(socketFd, order.c_str(), order.length(), 0);
+            }
+            else
+            {
+                cout << "No momentum. Ignoring price ID " << priceId << endl;
+            }
+        }
+        else
+        {
+            cout << "Waiting for " << HISTORY_SIZE << " prices to be received..." << endl;
+        }
     }
 
+    // Close socket when trading done
     close(socketFd);
 }
 

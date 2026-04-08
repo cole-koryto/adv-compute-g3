@@ -1,3 +1,10 @@
+# Phase 2
+hft_client
+hft_server
+
+# LLM
+.codex
+
 # Python venv
 .venv
 .venvwsl

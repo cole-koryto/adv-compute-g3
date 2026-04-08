@@ -9,8 +9,11 @@
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
+
+// libaries must be run in linux
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <utility>
 
 using namespace std;
