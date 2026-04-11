@@ -1,45 +1,75 @@
-#include <unordered_map>
 #include <vector>
+#include <unordered_map>
+#include <array>
 #include <iostream>
-#include "MarketData.cpp";
+#include <numeric>
 
-struct alignas(64) Order {
-    int instrument_id;
-    double price;
-    bool is_buy;
-    std::chrono::high_resolution_clock::time_point timestamp;
-};
-
-class TradeEngine {
+class TradingEngine {
 public:
-    TradeEngine(const std::vector<MarketData>& feed)
-        : market_data(feed) {}
+    // I added signal_counts to help us keep track of how many signals fired in our member initialization array
+    TradingEngine(const std::vector<MarketData>& feed)
+        : market_data(feed), signal_counts{0,0,0,0}
+    {
+        // vectors can reallocate when they grow. If we reserve memory for performance, we can avoid this issue
+        orders.reserve(feed.size());
+        latencies.reserve(feed.size());
+    }
 
     void process() {
         for (const auto& tick : market_data) {
-            // Update history
             updateHistory(tick);
 
-            // Apply signals
-            bool buy = false, sell = false;
+            bool buy = false;
+            bool sell = false;
+            // I changed the assignment logic from buy = true into storing the signal as an int. 
+            // We can count how often each signal fires and store the initial signal that was associated with the order as well
+            int first_signal = 0;
 
-            if (signal1(tick)) buy = true;
-            if (signal2(tick)) { if (tick.price < getAvg(tick.instrument_id)) buy = true; else sell = true; }
-            if (signal3(tick)) buy = true;
+            if (signal1(tick)) {
+                buy = true;
+                if (first_signal == 0) first_signal = 1;
+                signal_counts[1]++;
+            }
+
+            if (signal2(tick)) {
+                double avg = getAvg(tick.instrument_id);
+                if (tick.price < avg) buy = true;
+                else sell = true;
+
+                if (first_signal == 0) first_signal = 2;
+                signal_counts[2]++;
+            }
+
+            if (signal3(tick)) {
+                buy = true;
+                if (first_signal == 0) first_signal = 3;
+                signal_counts[3]++;
+            }
 
             if (buy || sell) {
-                auto now = std::chrono::high_resolution_clock::now();
-                Order o { tick.instrument_id, tick.price + (buy ? 0.01 : -0.01), buy, now };
+                auto now = Clock::now();
+
+                Order o;
+                o.instrument_id = tick.instrument_id;
+                o.price = tick.price + (buy ? 0.01 : -0.01);
+                o.is_buy = buy;
+                o.timestamp = now;
+                // I also added triggering_signal to first signal for later.
+                o.triggering_signal = first_signal;
+
                 orders.push_back(o);
 
-                auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(now - tick.timestamp).count();
+                auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    now - tick.timestamp).count();
+
                 latencies.push_back(latency);
             }
         }
     }
 
-    void reportStats() {
+    void reportStats() const {
         long long sum = 0, max_latency = 0;
+
         for (auto l : latencies) {
             sum += l;
             if (l > max_latency) max_latency = l;
@@ -48,8 +78,14 @@ public:
         std::cout << "\n--- Performance Report ---\n";
         std::cout << "Total Market Ticks Processed: " << market_data.size() << "\n";
         std::cout << "Total Orders Placed: " << orders.size() << "\n";
-        std::cout << "Average Tick-to-Trade Latency (ns): " << (latencies.empty() ? 0 : sum / latencies.size()) << "\n";
+        std::cout << "Average Tick-to-Trade Latency (ns): "
+                  << (latencies.empty() ? 0 : sum / latencies.size()) << "\n";
         std::cout << "Maximum Tick-to-Trade Latency (ns): " << max_latency << "\n";
+
+        std::cout << "\n--- Signal Contributions ---\n";
+        std::cout << "Signal 1: " << signal_counts[1] << "\n";
+        std::cout << "Signal 2: " << signal_counts[2] << "\n";
+        std::cout << "Signal 3: " << signal_counts[3] << "\n";
     }
 
 private:
@@ -57,6 +93,7 @@ private:
     std::vector<Order> orders;
     std::vector<long long> latencies;
     std::unordered_map<int, std::vector<double>> price_history;
+    std::array<int, 4> signal_counts;
 
     void updateHistory(const MarketData& tick) {
         auto& hist = price_history[tick.instrument_id];
@@ -64,31 +101,37 @@ private:
         if (hist.size() > 10) hist.erase(hist.begin());
     }
 
-    double getAvg(int id) {
-        auto& hist = price_history[id];
-        double sum = 0;
-        for (double p : hist) sum += p;
-        return hist.empty() ? 0 : sum / hist.size();
+    double getAvg(int id) const {
+        // I saw that the current initial implementation directl indexed the map everywhere.
+        // finding it initially was cleaner to me and avoided accidental insertions that could occur in large scale/during runs
+        auto it = price_history.find(id);
+        if (it == price_history.end() || it->second.empty()) return 0;
+
+        const auto& hist = it->second;
+        double sum = std::accumulate(hist.begin(), hist.end(), 0.0);
+        return sum / hist.size();
     }
 
-    // Signal 1: Price thresholds
-    bool signal1(const MarketData& tick) {
+    bool signal1(const MarketData& tick) const {
         return tick.price < 105.0 || tick.price > 195.0;
     }
 
-    // Signal 2: Deviation from average
-    bool signal2(const MarketData& tick) {
-        if (price_history[tick.instrument_id].size() < 5) return false;
+    bool signal2(const MarketData& tick) const {
+        auto it = price_history.find(tick.instrument_id);
+        if (it == price_history.end() || it->second.size() < 5) return false;
+
         double avg = getAvg(tick.instrument_id);
         return tick.price < avg * 0.98 || tick.price > avg * 1.02;
     }
 
-    // Signal 3: Simple momentum
-    bool signal3(const MarketData& tick) {
-        auto& hist = price_history[tick.instrument_id];
-        if (hist.size() < 3) return false;
-        double diff1 = hist[hist.size() - 2] - hist[hist.size() - 3];
-        double diff2 = hist[hist.size() - 1] - hist[hist.size() - 2];
-        return diff1 > 0 && diff2 > 0;
+    bool signal3(const MarketData& tick) const {
+        auto it = price_history.find(tick.instrument_id);
+        if (it == price_history.end() || it->second.size() < 3) return false;
+
+        const auto& hist = it->second;
+        double d1 = hist[hist.size()-2] - hist[hist.size()-3];
+        double d2 = hist[hist.size()-1] - hist[hist.size()-2];
+
+        return d1 > 0 && d2 > 0;
     }
 };

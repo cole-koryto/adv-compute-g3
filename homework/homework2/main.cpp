@@ -1,24 +1,26 @@
-#include <vector>
 #include <iostream>
-#include "MarketDataFeed.cpp"
+#include <vector>
 #include "MarketData.cpp"
+#include "MarketDataFeed.cpp"
 #include "TradingEngine.cpp"
 
 int main() {
+
     std::vector<MarketData> feed;
     MarketDataFeed generator(feed);
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = Clock::now();
+
     generator.generateData(100000);
 
-    TradeEngine engine(feed);
+    TradingEngine engine(feed);
     engine.process();
 
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = Clock::now();
     auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     engine.reportStats();
-    std::cout << "Total Runtime (ms): " << runtime << std::endl;
+    std::cout << "Total Runtime (ms): " << runtime << "\n";
 
     return 0;
 }
