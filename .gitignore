@@ -58,7 +58,7 @@ hft_server
 *.claude
 
 # local stuff for ease of access
-ASSIGNMENT.md
+ASSIGNMENT.*
 
 build/
 
