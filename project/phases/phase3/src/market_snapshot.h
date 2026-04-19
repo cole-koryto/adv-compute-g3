@@ -1,3 +1,9 @@
+#ifndef MARKET_SNAPSHOT_H
+#define MARKET_SNAPSHOT_H
+
+#include <map>
+#include <memory>
+
 struct PriceLevel
 {
     double price;
@@ -5,3 +11,18 @@ struct PriceLevel
 
     PriceLevel(double p, int q) : price(p), quantity(q) {}
 };
+
+class MarketSnapshot
+{
+    std::map<double, std::unique_ptr<PriceLevel>> bids; // sorted descending
+    std::map<double, std::unique_ptr<PriceLevel>> asks; // sorted ascending
+
+public:
+    void update_bid(double price, int qty);
+    void update_ask(double price, int qty);
+
+    const PriceLevel *get_best_bid() const;
+    const PriceLevel *get_best_ask() const;
+};
+
+#endif // MARKET_SNAPSHOT_H
