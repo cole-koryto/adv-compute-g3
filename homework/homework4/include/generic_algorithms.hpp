@@ -1,8 +1,14 @@
-//
-// Created by colek on 4/24/2026.
-//
+#pragma once
 
-#ifndef ADV_COMPUTE_G3_GENERIC_ALGORITHMS_HPP
-#define ADV_COMPUTE_G3_GENERIC_ALGORITHMS_HPP
+template<typename InputIterator, typename Predicate>
+InputIterator find_if(InputIterator first, InputIterator last, Predicate pred)
+{
+    while (first != last) {
+        if (pred(*first)) {
+            return first;
+        }
+        ++first;
+    }
 
-#endif //ADV_COMPUTE_G3_GENERIC_ALGORITHMS_HPP
+    return last;
+}

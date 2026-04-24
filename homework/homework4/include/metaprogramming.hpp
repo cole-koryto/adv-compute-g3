@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <type_traits>
 
 // TMP-based factorial
@@ -21,18 +22,23 @@ template<> struct Fibonacci<0> {
 };
 
 // TMP-based odd check and print
-template<int N> struct IsOdd {
-    static constexpr bool value = (N % 2 != 0);
-};
-template<int N>
-std::enable_if_t<IsOdd<N>::value> print_if_odd()
+template<typename T, typename = void>
+struct IsOdd : std::false_type {};
+
+template<typename T>
+struct IsOdd<T, std::void_t<decltype(T::value)>>
+    : std::bool_constant<
+          std::is_integral_v<decltype(T::value)> && (T::value % 2 != 0)> {};
+
+template<typename T, std::enable_if_t<IsOdd<T>::value, int> = 0>
+void print_if_odd(T)
 {
-    std::cout << N << std::endl;
-};
+    std::cout << T::value << std::endl;
+}
 
 // TMP-based print all
 template<typename... Args>
 void print_all(Args... args)
 {
     ((std::cout << args << ", "), ...) << std::endl;  // fold expression
-};
+}

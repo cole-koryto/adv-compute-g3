@@ -1,9 +1,15 @@
 #include <iostream>
+#include <cassert>
 #include "metaprogramming.hpp"
 #include "constexpr_math.hpp"
 #include "StaticVector.hpp"
 #include "generic_algorithms.hpp"
 #include "OrderBookBuffer.hpp"
+
+struct Order {
+    double price;
+    int quantity;
+};
 
 int main() {
     std::cout << "HFT Template Homework Starter\n";
@@ -11,9 +17,38 @@ int main() {
     // Tests metaprogramming
     static_assert(Factorial<5>::value == 120, "Incorrect Factorial");
     static_assert(Fibonacci<7>::value == 13, "Incorrect Fibonacci");
-    static_assert(IsOdd<1>::value, "Incorrect IsOdd");
-    print_if_odd<5>();
+    static_assert(IsOdd<std::integral_constant<int, 1>>::value, "Incorrect IsOdd");
+    print_if_odd(std::integral_constant<int, 5>{});
     print_all(7, 8, 1);
+
+    // Tests constexpr_math
+    static_assert(price_bucket(17.07) == 17.05, "Incorrect price_bucket");
+    static_assert(price_bucket(101.73) == 101.70, "Incorrect price_bucket");
+    static_assert(factorial(5) == 120, "Incorrect factorial");
+    static_assert(fibonacci(7)== 13, "Incorrect fibonacci");
+    assert(price_bucket(17.07) == 17.05);
+    assert(price_bucket(101.73) == 101.70);
+    assert(factorial(5) == 120);
+    assert(fibonacci(7) == 13);
+
+    // Tests StaticVector
+    StaticVector<Order, 4> orders;
+
+
+    auto it = orders.begin();
+
+    while (it != orders.end()) {
+        it = find_if(it, orders.end(), [](const Order& o) {
+            return o.price > 100;
+        });
+
+        if (it != orders.end()) {
+            std::cout << "Price > 100: " << it->price
+                      << ", qty: " << it->quantity << std::endl;
+            ++it;  // move forward to avoid infinite loop
+        }
+    }
+
 
 
     return 0;

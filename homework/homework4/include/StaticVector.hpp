@@ -1,8 +1,46 @@
-//
-// Created by colek on 4/24/2026.
-//
+#pragma once
+template <class T, size_t N>
+class StaticVector
+{
+private:
+    T array[N];
+    int head_index;
 
-#ifndef ADV_COMPUTE_G3_STATICVECTOR_HPP
-#define ADV_COMPUTE_G3_STATICVECTOR_HPP
+public:
+    StaticVector()
+    {
+        array = new T[N];
+        head_index = 0;
+    }
 
-#endif //ADV_COMPUTE_G3_STATICVECTOR_HPP
+    ~StaticVector()
+    {
+        delete[] array;
+    }
+
+    void push_back(T element)
+    {
+        array[head_index] = element;
+        head_index++;
+    }
+
+    T& operator[](int index)
+    {
+        return array[index];
+    }
+
+    int size()
+    {
+        return head_index;
+    }
+
+     T* begin()
+    {
+        return array;
+    }
+
+    T* end()
+    {
+        return array + head_index;
+    }
+};
