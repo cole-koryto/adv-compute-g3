@@ -1,0 +1,8 @@
+//
+// Created by colek on 4/24/2026.
+//
+
+#ifndef ADV_COMPUTE_G3_STATICVECTOR_HPP
+#define ADV_COMPUTE_G3_STATICVECTOR_HPP
+
+#endif //ADV_COMPUTE_G3_STATICVECTOR_HPP
