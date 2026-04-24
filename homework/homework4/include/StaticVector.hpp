@@ -1,27 +1,22 @@
 #pragma once
+#include <cstddef>
+
 template <class T, size_t N>
 class StaticVector
 {
 private:
-    T array[N];
-    int head_index;
+    T array[N]{};
+    size_t head_index;
 
 public:
-    StaticVector()
-    {
-        array = new T[N];
-        head_index = 0;
-    }
-
-    ~StaticVector()
-    {
-        delete[] array;
-    }
+    StaticVector() : head_index(0) {}
 
     void push_back(T element)
     {
-        array[head_index] = element;
-        head_index++;
+        if (head_index < N) {
+            array[head_index] = element;
+            ++head_index;
+        }
     }
 
     T& operator[](int index)
@@ -29,12 +24,12 @@ public:
         return array[index];
     }
 
-    int size()
+    size_t size() const
     {
         return head_index;
     }
 
-     T* begin()
+    T* begin()
     {
         return array;
     }

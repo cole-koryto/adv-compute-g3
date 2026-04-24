@@ -33,10 +33,12 @@ int main() {
 
     // Tests StaticVector
     StaticVector<Order, 4> orders;
+    orders.push_back({100.5, 10});
+    orders.push_back({120.0, 5});
+    orders.push_back({90.0, 20});
 
-
+    // Find all orders with price > 100
     auto it = orders.begin();
-
     while (it != orders.end()) {
         it = find_if(it, orders.end(), [](const Order& o) {
             return o.price > 100;
@@ -49,7 +51,17 @@ int main() {
         }
     }
 
+    //Find the first order with quantity divisible by 10
+    it = find_if(orders.begin(), orders.end(), [](const Order& o) {
+    return o.quantity % 10 == 0;
+    });
 
+    if (it != orders.end()) {
+        std::cout << "First qty divisible by 10: "
+                  << it->quantity << std::endl;
+    } else {
+        std::cout << "No match found\n";
+    }
 
     return 0;
 }
