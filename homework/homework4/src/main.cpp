@@ -6,9 +6,19 @@
 #include "generic_algorithms.hpp"
 #include "OrderBookBuffer.hpp"
 
-struct Order {
+struct Order
+{
     double price;
     int quantity;
+
+    friend std::ostream& operator<<(std::ostream& os, const Order& order)
+    {
+        os << "Order{price=" << order.price
+           << ", quantity=" << order.quantity
+           << "}";
+
+        return os;
+    }
 };
 
 int main() {
@@ -62,6 +72,25 @@ int main() {
     } else {
         std::cout << "No match found\n";
     }
+
+    // Tests OrderBook
+    using StackOrderAllocator = StackAllocator<Order, 10>;
+    using HeapOrderAllocator = HeapAllocator<Order>;
+
+    OrderBookBuffer<Order, StackOrderAllocator, NoLock> book1(10);
+    OrderBookBuffer<Order, HeapOrderAllocator, MutexLock> book2(10);
+
+    book1.add_order({99.50, 100});
+    book1.add_order({101.25, 50});
+
+    book2.add_order({102.75, 200});
+    book2.add_order({98.10, 75});
+
+    std::cout << "Book 1: StackAllocator + NoLock\n";
+    book1.print_orders();
+
+    std::cout << "\nBook 2: HeapAllocator + MutexLock\n";
+    book2.print_orders();
 
     return 0;
 }
