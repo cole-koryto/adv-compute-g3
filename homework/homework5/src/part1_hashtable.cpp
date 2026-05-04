@@ -1,61 +1,71 @@
-#include <iostream>
+#include "robin_hood_map.hpp"
+#include <chrono>
+#include <cstddef>
 #include <iomanip>
-#include <robin_hood_map.hpp>
-#include <array>
+#include <iostream>
 #include <string>
 #include <unordered_map>
-#include <chrono>
+#include <vector>
 
-int main()
-{
-    int size = 2 << 20;
-    RobinHoodMap<int> map(size << 1);
-    std::unordered_map<std::string, int> umap;
-    umap.reserve(size);
+using clock_type = std::chrono::high_resolution_clock;
 
-    std::vector<std::string> keys;
-    for (int i = 0; i < size; i++)
-    {
-        keys.push_back(std::to_string(i));
+template <typename Fn> double time_run(Fn &&fn) {
+  auto t0 = clock_type::now();
+  fn();
+  auto t1 = clock_type::now();
+  return std::chrono::duration<double>(t1 - t0).count();
+}
+
+int main() {
+  constexpr std::size_t N = 2 << 20;
+
+  std::vector<std::string> keys;
+  keys.reserve(N);
+  for (std::size_t i = 0; i < N; ++i)
+    keys.push_back(std::to_string(i));
+
+  RobinHoodMap<int> rh(N << 1);
+  std::unordered_map<std::string, int> um;
+  um.reserve(N);
+
+  volatile std::size_t sink = 0;
+
+  const double t_rh_insert = time_run([&] {
+    for (std::size_t i = 0; i < N; ++i)
+      rh.insert(keys[i], static_cast<int>(i));
+  });
+  const double t_um_insert = time_run([&] {
+    for (std::size_t i = 0; i < N; ++i)
+      um[keys[i]] = static_cast<int>(i);
+  });
+  const double t_rh_lookup = time_run([&] {
+    for (const auto &k : keys) {
+      auto *v = rh.find(k);
+      if (v)
+        sink += *v;
     }
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < size; i++)
-    {
-        map.insert(keys[i], i);
+  });
+  const double t_um_lookup = time_run([&] {
+    for (const auto &k : keys) {
+      auto it = um.find(k);
+      if (it != um.end())
+        sink += it->second;
     }
+  });
 
-    auto t2 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < size; i++)
-    {
-        umap[keys[i]] = i;
-    }
+  std::cout << "N = " << N << "\n\n";
 
-    auto t3 = std::chrono::high_resolution_clock::now();
+  std::cout << std::left << std::setw(22) << "variant" << std::right
+            << std::setw(14) << "insert (s)" << std::setw(14) << "lookup (s)"
+            << "\n";
+  std::cout << std::string(50, '-') << "\n";
 
-    // force compiler to not optimize this loop away
-    volatile size_t sink = 0;
-    auto t4 = std::chrono::high_resolution_clock::now();
-    for (auto &k : keys)
-    {
-        auto *v = map.find(k);
-        if (v)
-            sink += *v;
-    }
-    auto t5 = std::chrono::high_resolution_clock::now();
+  auto row = [&](const std::string &name, double t_ins, double t_look) {
+    std::cout << std::left << std::setw(22) << name << std::right << std::fixed
+              << std::setprecision(4) << std::setw(14) << t_ins << std::setw(14)
+              << t_look << "\n";
+  };
 
-    sink = 0;
-    auto t6 = std::chrono::high_resolution_clock::now();
-    for (auto &k : keys)
-    {
-        auto it = umap.find(k);
-        if (it != umap.end())
-            sink += it->second;
-    }
-    auto t7 = std::chrono::high_resolution_clock::now();
-
-    std::cout << "RobinHoood: " << std::chrono::duration<double>(t2 - t1).count() << " s" << std::endl;
-    std::cout << "lookup time: " << std::chrono::duration<double>(t5 - t4).count() << " s" << std::endl;
-    std::cout << "UnorderedMap: " << std::chrono::duration<double>(t3 - t2).count() << " s" << std::endl;
-    std::cout << "lookup time: " << std::chrono::duration<double>(t7 - t6).count() << " s" << std::endl;
+  row("RobinHoodMap", t_rh_insert, t_rh_lookup);
+  row("std::unordered_map", t_um_insert, t_um_lookup);
 }
