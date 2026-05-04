@@ -51,6 +51,18 @@ Writes `phase5_bench.csv` in the current directory by default.
 ./phase5_bench --seed 1 --out phase5_bench.csv
 ```
 
+### Note: 
+
+Expected Outputs:
+
+```bash
+N=1000 total=0.000799375s (add 0.000300625s, modify 0.000237917s, delete 0.000260833s)
+N=5000 total=0.00531838s (add 0.00155575s, modify 0.00156788s, delete 0.00219475s)
+N=10000 total=0.0107028s (add 0.00364725s, modify 0.00359713s, delete 0.00345842s)
+N=50000 total=0.0485211s (add 0.0163503s, modify 0.0156857s, delete 0.0164851s)
+N=100000 total=0.111731s (add 0.0316322s, modify 0.0397063s, delete 0.0403928s)
+```
+
 ## Plot
 
 If you have matplotlib:
