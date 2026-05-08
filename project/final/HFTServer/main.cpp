@@ -184,7 +184,7 @@ void startServer() {
     sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(PORT);
-    inet_pton(AF_INET, "0.0.0.0", &serverAddr.sin_addr);
+    inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
     if (::bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
         perror("Bind failed");
@@ -198,7 +198,7 @@ void startServer() {
         exit(EXIT_FAILURE);
     }
 
-    cout << "🚀 Server is listening on 0.0.0.0:" << PORT << endl;
+    cout << "🚀 Server is listening on 127.0.0.1:" << PORT << endl;
 
     thread broadcaster(broadcastChallengeLoop);
     broadcaster.detach();

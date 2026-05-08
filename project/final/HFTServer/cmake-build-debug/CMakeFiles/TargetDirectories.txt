@@ -1,3 +1,0 @@
-/Users/sdonadio/CLionProjects/HFTProject2025/HFTServer/cmake-build-debug/CMakeFiles/HFTServer.dir
-/Users/sdonadio/CLionProjects/HFTProject2025/HFTServer/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/sdonadio/CLionProjects/HFTProject2025/HFTServer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
