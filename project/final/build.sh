@@ -17,9 +17,12 @@ cmake --build "${BUILD_DIR}" -j$(nproc 2>/dev/null || echo 4)
 echo "Copying binaries to project root for convenience..."
 cp -f "${BIN_DIR}/hftserver2026" ./hftserver2026 || true
 cp -f "${BIN_DIR}/hftclient2026" ./hftclient2026 || true
+cp -f "${BIN_DIR}/hftclient2026_koryto" ./hftclient2026_koryto || true
 chmod +x ./hftserver2026 ./hftclient2026 || true
 
 echo "Build complete."
 echo "Server: ${BIN_DIR}/hftserver2026 (also copied to ./hftserver2026)"
 echo "Client: ${BIN_DIR}/hftclient2026 (also copied to ./hftclient2026)"
+echo "Client_koryto: ${BIN_DIR}/hftclient2026_koryto (also copied to ./hftclient2026_koryto)"
+
 

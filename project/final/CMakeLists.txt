@@ -33,10 +33,11 @@ FetchContent_MakeAvailable(nlohmann_json)
 # Add subprojects
 add_subdirectory(hftserver2026)
 add_subdirectory(hftclient2026)
+add_subdirectory(hftclient2026_koryto)
 
 # add tools (blast server)
 add_subdirectory(tools)
 
 # Convenience target to build both
-add_custom_target(all_bins DEPENDS hftserver2026 hftclient2026)
+add_custom_target(all_bins DEPENDS hftserver2026 hftclient2026 hftclient2026_koryto)
 
