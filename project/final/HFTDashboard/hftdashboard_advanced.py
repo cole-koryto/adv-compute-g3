@@ -28,7 +28,7 @@ app = dash.Dash(__name__, server=server, routes_pathname_prefix='/dashboard/')
 
 app.layout = html.Div([
     html.H1("HFT Challenge Dashboard"),
-    dcc.Interval(id='interval-update', interval=5000, n_intervals=0),  # update every 5 sec
+    dcc.Interval(id='interval-update', interval=50000, n_intervals=0),  # update every 5 sec
     html.H2("Aggregated Statistics"),
     html.Div(id='aggregated-stats'),
     dcc.Graph(id='overall-latency-graph'),
@@ -204,4 +204,8 @@ def update_dashboard(n_intervals):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # bind to all interfaces (use only for local network testing)
+    app.run(debug=True, host='0.0.0.0', port=5001)
+
+
+
