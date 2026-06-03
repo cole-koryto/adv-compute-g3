@@ -18,6 +18,7 @@ echo "Copying binaries to project root for convenience..."
 cp -f "${BIN_DIR}/hftserver2026" ./hftserver2026 || true
 cp -f "${BIN_DIR}/hftclient2026" ./hftclient2026 || true
 cp -f "${BIN_DIR}/hftclient2026_koryto" ./hftclient2026_koryto || true
+cp -f "${BIN_DIR}/hftclient2026_kim" ./hftclient2026_kim || true
 chmod +x ./hftserver2026 ./hftclient2026 || true
 
 echo "Build complete."
