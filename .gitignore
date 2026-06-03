@@ -1,3 +1,11 @@
+# Final Project
+hftclient2026
+hftclient2026_koryto
+hftserver2026
+/project/final/logs/
+/project/final/HFTServer/cmake-build-debug/
+
+
 # Phase 2
 hft_client
 hft_server
@@ -64,4 +72,3 @@ build/
 
 
 .DS_Store
-/project/final/HFTServer/cmake-build-debug/
